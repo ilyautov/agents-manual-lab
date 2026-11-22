@@ -1,0 +1,29 @@
+{
+  "name": "agents-book-lab",
+  "private": true,
+  "type": "module",
+  "version": "2026.11.10",
+  "description": "Лаборатория к книге «Инженерия агентов»: детерминированные опыты на TypeScript",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\"",
+    "numbers": "node scripts/numbers.ts",
+    "build": "node build/build.mjs",
+    "demo:reliability": "node src/demo-reliability.ts",
+    "demo:machine": "node src/demo-machine.ts",
+    "demo:tools": "node src/demo-tools.ts",
+    "demo:planning": "node src/demo-planning.ts",
+    "demo:budget": "node src/demo-budget.ts",
+    "demo:retry": "node src/demo-retry.ts",
+    "demo:journal": "node src/demo-journal.ts",
+    "demo:approval": "node src/demo-approval.ts",
+    "demo:sandbox": "node src/demo-sandbox.ts",
+    "demo:dag": "node src/demo-dag.ts",
+    "demo:trace": "node src/demo-trace.ts",
+    "demo:eval": "node src/demo-eval.ts",
+    "demo:agent": "node src/demo-agent.ts"
+  }
+}
