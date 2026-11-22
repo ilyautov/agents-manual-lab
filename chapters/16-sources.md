@@ -20,6 +20,8 @@
 [6] Shinn N. et al. Reflexion: Language Agents with Verbal Reinforcement Learning. 2023. arXiv:2303.11366.
 
 [7] Anthropic. Model Context Protocol. Specification. 2024. https://modelcontextprotocol.io/specification
+
+[32] Cemri M., Pan M. Z., Yang S. et al. Why Do Multi-Agent LLM Systems Fail? NeurIPS, 2025. arXiv:2503.13657. DOI:10.52202/085713-4082.
 :::
 
 ## Надёжность распределённых систем
