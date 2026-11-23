@@ -256,7 +256,7 @@ function requestOf(ctx: Ctx, world: World, amount: number) {
   const c = world.customers.get(ctx.ticket.customerId)!;
   return {
     ticketId: ctx.ticket.id, orderId: o.id, customer: c.name, item: o.item, amount,
-    orderTotal: o.total, deliveredDaysAgo: o.deliveredDaysAgo, refundsLast30d: 0, customerText: ctx.ticket.email,
+    orderTotal: o.total, deliveredDaysAgo: o.deliveredDaysAgo, refundsLast30d: c.refundsLast30d, customerText: ctx.ticket.email,
   };
 }
 

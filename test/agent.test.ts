@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { goalVeto, runAgent, scenarios } from '../src/agent.ts';
-import { TICKETS } from '../src/shop.ts';
+import { makeWorld, TICKETS } from '../src/shop.ts';
 
 const s = scenarios();
 
@@ -66,4 +66,18 @@ test('крошечный бюджет: штатная передача чело�
   assert.equal(s.tinyBudget.state, 'handed_off');
   assert.ok(s.tinyBudget.spans.some((x) => x.name === 'handoff'));
   assert.ok(s.tinyBudget.cost <= 0.03);
+});
+
+test('история клиента: три возврата за 30 дней ведут к человеку, даже при малой сумме', () => {
+  const world = makeWorld();
+  world.customers.set('C-5', { id: 'C-5', name: 'Дмитрий', email: 'dmitry@example.com', refundsLast30d: 3 });
+  world.orders.set('A-1006', { id: 'A-1006', customerId: 'C-5', item: 'лампа', total: 1990, deliveredDaysAgo: 2, refunded: 0, version: 1 });
+  const ticket = { id: 'T-6', orderId: 'A-1006', customerId: 'C-5', email: 'Лампа не работает, верните деньги.' };
+  const approved = runAgent(ticket, {}, world);
+  assert.deepEqual([approved.state, approved.approvals, approved.refunds, approved.refunded], ['done', 1, 1, 1990]);
+  const world2 = makeWorld();
+  world2.customers.set('C-5', { id: 'C-5', name: 'Дмитрий', email: 'dmitry@example.com', refundsLast30d: 3 });
+  world2.orders.set('A-1006', { id: 'A-1006', customerId: 'C-5', item: 'лампа', total: 1990, deliveredDaysAgo: 2, refunded: 0, version: 1 });
+  const rejected = runAgent(ticket, { approval: 'rejected' }, world2);
+  assert.deepEqual([rejected.state, rejected.refunds, rejected.messages], ['done', 0, 1]);
 });

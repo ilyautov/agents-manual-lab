@@ -10,7 +10,7 @@ export interface Order {
   version: number;
 }
 
-export interface Customer { id: string; name: string; email: string }
+export interface Customer { id: string; name: string; email: string; refundsLast30d: number }
 
 export const POLICY = { returnDays: 14, approvalThreshold: 5000 } as const;
 
@@ -100,10 +100,10 @@ export function makeWorld(): World {
     ['A-1005', { id: 'A-1005', customerId: 'C-1', item: 'две подушки', total: 7980, deliveredDaysAgo: 6, refunded: 0, version: 1 }],
   ]);
   const customers = new Map<string, Customer>([
-    ['C-1', { id: 'C-1', name: 'Анна', email: 'anna@example.com' }],
-    ['C-2', { id: 'C-2', name: 'Борис', email: 'boris@example.com' }],
-    ['C-3', { id: 'C-3', name: 'Вера', email: 'vera@example.com' }],
-    ['C-4', { id: 'C-4', name: 'Глеб', email: 'gleb@example.com' }],
+    ['C-1', { id: 'C-1', name: 'Анна', email: 'anna@example.com', refundsLast30d: 0 }],
+    ['C-2', { id: 'C-2', name: 'Борис', email: 'boris@example.com', refundsLast30d: 0 }],
+    ['C-3', { id: 'C-3', name: 'Вера', email: 'vera@example.com', refundsLast30d: 0 }],
+    ['C-4', { id: 'C-4', name: 'Глеб', email: 'gleb@example.com', refundsLast30d: 0 }],
   ]);
   return { orders, customers, payments: new PaymentService(orders), notifier: new Notifier() };
 }

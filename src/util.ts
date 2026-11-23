@@ -29,10 +29,11 @@ export function comb(n: number, k: number): number {
   return r;
 }
 
+/** Целое с разрядами через неразрывный пробел: 12500 → "12 500". */
+export const int = (x: number): string => Math.round(x).toLocaleString('ru-RU').replace(/\s/g, '\u00a0');
+
 /** Сумма в рублях с разрядами через неразрывный пробел: 12500 → "12 500 ₽". */
-export function rub(x: number): string {
-  return `${Math.round(x).toLocaleString('ru-RU').replace(/\s/g, '\u00a0')}\u00a0₽`;
-}
+export const rub = (x: number): string => `${int(x)}\u00a0₽`;
 
 export function isMain(url: string): boolean {
   return process.argv[1] !== undefined && url === pathToFileURL(process.argv[1]).href;

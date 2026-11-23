@@ -8,6 +8,8 @@ export { passAtK, passHatK };
 export interface Interval { low: number; high: number }
 
 export function wilson(successes: number, trials: number, z = 1.96): Interval {
+  if (trials <= 0) throw new Error(`wilson: испытаний должно быть больше нуля, получили ${trials}`);
+  if (successes < 0 || successes > trials) throw new Error(`wilson: успехов ${successes} вне интервала 0..${trials}`);
   const p = successes / trials;
   const d = 1 + (z * z) / trials;
   const center = (p + (z * z) / (2 * trials)) / d;
@@ -36,6 +38,7 @@ export function mcnemarExact(b: number, c: number): number {
 
 /** Парный bootstrap-интервал разницы долей успеха B − A (перцентильный метод). */
 export function bootstrapDiff(a: boolean[], b: boolean[], resamples: number, seed: number, level = 0.95): Interval & { diff: number } {
+  if (a.length !== b.length) throw new Error(`bootstrapDiff: массивы должны быть парными, получили ${a.length} и ${b.length}`);
   const n = a.length;
   const rand = mulberry32(seed);
   const diffs: number[] = [];

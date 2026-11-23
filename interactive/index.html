@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Автомат агента — интерактивная таблица переходов</title>
+<style>
+  :root { --paper:#F6F4EE; --ink:#1F2724; --lime:#B5DD4C; --blue:#A8DDE1; --amber:#F4C77D; --grey:#D9DBD3; --text:#2B302D; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--paper); color:var(--text); font:16px/1.55 Georgia, serif; }
+  header { background:var(--ink); color:var(--paper); padding:40px 24px 64px; }
+  header .kicker { color:var(--lime); font:700 12px/1.3 Arial, sans-serif; letter-spacing:.18em; }
+  header h1 { margin:12px 0 10px; font-size:clamp(28px,4.5vw,44px); line-height:1.05; font-weight:400; }
+  header p { max-width:720px; margin:0; color:#D9DFD9; font-size:17px; }
+  main { max-width:1080px; margin:-28px auto 60px; padding:0 24px; }
+  .card { background:#fff; border:1px solid var(--grey); border-radius:10px; padding:26px 28px; margin-bottom:26px; }
+  h2 { font:700 14px/1.3 Arial, sans-serif; letter-spacing:.12em; text-transform:uppercase; margin:0 0 16px; color:var(--ink); }
+  .state { display:inline-block; border:2px solid var(--ink); border-radius:999px; padding:7px 16px; margin:4px; font:600 14px/1.2 Arial, sans-serif; cursor:pointer; background:#fff; color:var(--ink); }
+  .state.current { background:var(--lime); box-shadow:0 0 0 4px rgba(181,221,76,.35); }
+  .state.terminal { border-style:dashed; cursor:default; }
+  .events { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .event { border:1.5px solid var(--ink); border-radius:8px; padding:8px 13px; font:600 13px/1.2 Arial, sans-serif; cursor:pointer; background:#fff; }
+  .event.allowed { background:var(--blue); }
+  .event.forbidden { opacity:.42; cursor:not-allowed; }
+  .log { font:13px/1.6 "Liberation Mono", Menlo, monospace; background:var(--paper); border:1px solid var(--grey); border-radius:8px; padding:14px 16px; min-height:120px; white-space:pre-wrap; }
+  .log .ok { color:#3a6b1f; } .log .err { color:#a3451b; } .log .veto { color:#8a6d1a; }
+  .facts { display:flex; flex-wrap:wrap; gap:10px 22px; margin:6px 0 4px; }
+  .facts label { font:600 14px/1.4 Arial, sans-serif; cursor:pointer; }
+  .note { font-size:14px; color:#5c645f; margin-top:14px; }
+  footer { border-top:1px solid var(--grey); padding:20px 24px 40px; font:13px/1.5 Arial, sans-serif; color:#5c645f; max-width:1080px; margin:0 auto; }
+  a { color:var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">ИНЖЕНЕРИЯ АГЕНТОВ · ГЛАВА 2</div>
+  <h1>Автомат агента: таблица переходов, которую можно пощупать</h1>
+  <p>Та же таблица переходов, что в <code>src/machine.ts</code> лаборатории. Выберите состояние, пошлите событие: разрешённые переходы подсвечены голубым, запрещённые выдают ошибку, а охранное условие на <code>goal_met</code> отклоняет переход, пока фактами не доказано, что задача решена.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>Состояния</h2>
+    <div id="states"></div>
+    <div class="note">Пунктирные состояния терминальные: из них нет переходов. Кнопка «сброс» возвращает автомат в <code>idle</code>.</div>
+  </div>
+
+  <div class="card">
+    <h2>Факты для охранного условия goal_met</h2>
+    <div class="facts">
+      <label><input type="checkbox" id="fEligible"> политика: возврат положен</label>
+      <label><input type="checkbox" id="fRefund"> возврат создан</label>
+      <label><input type="checkbox" id="fNotified"> клиент уведомлён</label>
+    </div>
+    <div class="note">Повторяет guard из <code>agent.ts</code>: если возврат положен, но не создан, или клиент не уведомлён, переход в <code>done</code> отклоняется, а причина уходит модели как наблюдение.</div>
+  </div>
+
+  <div class="card">
+    <h2>События из текущего состояния</h2>
+    <div class="events" id="events"></div>
+    <div class="log" id="log">Автомат в состоянии idle. Посылайте события.</div>
+    <p><button class="event" id="reset">сброс</button></p>
+  </div>
+</main>
+<footer>
+  Интерактив к книге «Инженерия агентов», редакция 2026.11.23 ·
+  <a href="https://github.com/ilyautov/agents-manual-lab">agents-manual-lab</a> ·
+  работает без сети, числа переходов соответствуют тестам <code>test/machine.test.ts</code>
+</footer>
+<script>
+const STATES = ['idle','planning','acting','observing','waiting_approval','done','failed','handed_off'];
+const EVENTS = ['start','plan_ready','need_approval','approved','rejected','approval_timeout','tool_done','continue','goal_met','give_up','budget_exhausted'];
+const TRANSITIONS = {
+  idle: { start: 'planning' },
+  planning: { plan_ready:'acting', need_approval:'waiting_approval', goal_met:'done', give_up:'failed', budget_exhausted:'handed_off' },
+  acting: { tool_done:'observing', budget_exhausted:'handed_off' },
+  observing: { continue:'planning', goal_met:'done', give_up:'failed', budget_exhausted:'handed_off' },
+  waiting_approval: { approved:'acting', rejected:'planning', approval_timeout:'handed_off' },
+  done: {}, failed: {}, handed_off: {},
+};
+const TERMINAL = (s) => Object.keys(TRANSITIONS[s]).length === 0;
+let state = 'idle';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function guardReason() {
+  const eligible = $('fEligible').checked, refund = $('fRefund').checked, notified = $('fNotified').checked;
+  if (eligible && !refund) return 'возврат положен, но не создан';
+  if (!notified) return 'клиент не уведомлён';
+  return null;
+}
+
+function render() {
+  $('states').innerHTML = STATES.map((s) =>
+    `<span class="state${s === state ? ' current' : ''}${TERMINAL(s) ? ' terminal' : ''}" data-s="${s}">${s}</span>`).join('') +
+    ` <button class="event" id="reset2">сброс</button>`;
+  $('events').innerHTML = EVENTS.map((e) => {
+    const allowed = e in TRANSITIONS[state];
+    return `<span class="event${allowed ? ' allowed' : ' forbidden'}" data-e="${e}">${e}</span>`;
+  }).join('');
+  document.querySelectorAll('.state:not(.terminal)').forEach((el) => el.onclick = () => { state = el.dataset.s; log(`состояние установлено: ${state}`, 'ok'); render(); });
+  document.querySelectorAll('.event[data-e]').forEach((el) => el.onclick = () => send(el.dataset.e));
+  $('reset2').onclick = reset;
+}
+
+function send(event) {
+  const to = TRANSITIONS[state][event];
+  if (to === undefined) { log(`переход ${state} --${event}--> запрещён (ForbiddenTransition)`, 'err'); return; }
+  if (event === 'goal_met') {
+    const reason = guardReason();
+    if (reason) { log(`guard goal_met: ${reason}. Переход отклонён, автомат остаётся в ${state}`, 'veto'); return; }
+  }
+  log(`${state} --${event}--> ${to}`, 'ok');
+  state = to;
+  render();
+}
+
+function reset() { state = 'idle'; log('сброс: автомат в состоянии idle', 'ok'); render(); }
+function log(text, cls) {
+  const el = $('log');
+  el.innerHTML = `<span class="${cls}">${esc(text)}</span>\n` + el.innerHTML;
+}
+$('reset').onclick = reset;
+render();
+</script>
+</body>
+</html>

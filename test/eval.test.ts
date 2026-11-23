@@ -79,3 +79,9 @@ test('ширина интервала при доле 75%: 240 задач вдв
   assert.equal(Math.round(width(240) * 100), 11);
   assert.ok(width(500) < width(240));
 });
+
+test('wilson и bootstrapDiff отклоняют бессмысленные входы понятной ошибкой', () => {
+  assert.throws(() => wilson(10, 0), /больше нуля/);
+  assert.throws(() => wilson(21, 20), /вне интервала/);
+  assert.throws(() => bootstrapDiff([true, false], [true], 100, 1), /парными/);
+});

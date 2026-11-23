@@ -11,7 +11,7 @@ import { SPECS, ToolRuntime, validateArgs } from '../src/tools.ts';
 import { makeWorld, TICKETS } from '../src/shop.ts';
 import { CONTEXT, PRICES, runUnderBudget, taskCost } from '../src/budget.ts';
 import { backoff, fullJitter, herdPeak, simulateOutage, CircuitBreaker, timeoutAfterEffect } from '../src/retry.ts';
-import { mulberry32 } from '../src/util.ts';
+import { int, mulberry32, rub } from '../src/util.ts';
 import { crashMatrix, crashPoints, JOB, runToCompletion } from '../src/journal.ts';
 import { approvalCard, approvalReasons, sampleRefunds, thresholdTable } from '../src/approval.ts';
 import { evaluateSandbox, secondLine, ATTACKS } from '../src/sandbox.ts';
@@ -21,7 +21,7 @@ import {
   bootstrapDiff, byCategory, cohenKappa, costPerSuccess, costWithFallback, ece, mcnemarExact, ngramOverlap,
   overconfidentAgent, pairedDataset, pairedTable, passMetrics, regressions, repeatedTrials, wilson,
 } from '../src/eval.ts';
-import { DEFAULT_LIMITS, runAgent, scenarios } from '../src/agent.ts';
+import { APPROVAL_WAIT_MS, DEFAULT_LIMITS, runAgent, scenarios } from '../src/agent.ts';
 import { BAD_PLAN, GOOD_PLAN, RULES, validatePlan } from '../src/planning.ts';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -30,9 +30,8 @@ const ROOT = join(import.meta.dirname, '..');
 export const fmt = (x: number, d = 2) => x.toFixed(d).replace('.', ',');
 /** Процент: pct(0.3585) → "36%". */
 export const pct = (x: number, d = 0) => `${fmt(x * 100, d)}%`;
-/** Целое с разрядами через неразрывный пробел: 12500 → "12 500". */
-export const int = (x: number) => Math.round(x).toLocaleString('ru-RU').replace(/\s/g, ' ');
-export const rub = (x: number) => `${int(x)} ₽`;
+/** Целое и рубли приходят из util.ts, чтобы числа книги и вывод демо печатались одинаково. */
+export { int, rub };
 /** Доллары: знак экранирован, иначе pandoc примет пару $ в абзаце за TeX-формулу. */
 export const usd = (x: number, d = 2) => `${fmt(x, d)}\u00a0\\$`;
 export const sec = (ms: number, d = 1) => `${fmt(ms / 1000, d)} с`;
@@ -184,7 +183,7 @@ export function buildNumbers() {
     rows: Object.fromEntries(table.map((r) => [`t${r.threshold}`, {
       threshold: rub(r.threshold), reviews: int(r.reviews), shareReviews: pct(r.shareReviews), shareMoney: pct(r.shareMoney),
     }])),
-    waitMin: 40,
+    waitMin: APPROVAL_WAIT_MS / 60_000,
     card: (() => {
       const req = { ticketId: 'T-2', orderId: 'A-1002', customer: 'Борис', item: 'кофемашина', amount: 12500, orderTotal: 12500,
         deliveredDaysAgo: 3, refundsLast30d: 0, customerText: TICKETS.large.email };
